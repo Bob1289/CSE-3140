@@ -114,9 +114,37 @@ Given a larger list of most common passwords (of 100k passwords) and a list of n
 create a script to find out what passwords they used.
 
 \subsection*{Break3.py:}
-TODO
+\begin{lstlisting}[language=Python]
+import time
+import os
+import threading
+
+if __name__ in '__main__':
+    start_time = time.time()
+    common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
+    gang_names=[i.strip() for i in open('/home/cse/Lab1/gang.txt')]
+
+    def thread_function(i):
+        for j in range(10):
+            if os.system('python3 ./Login.pyc'+ ' ' + i + ' ' + common_passwords[j] + " >/dev/null 2>&1") == 0:
+                print(i, common_passwords[j], "--- %s seconds ---" % (time.time() - start_time))
+                break
+
+    threads = list()
+    for i in gang_names:
+        x = threading.Thread(target=thread_function, args=(i,))
+        threads.append(x)
+        x.start()
+
+    for index, thread in enumerate(threads):
+        thread.join()
+    
+        print("--- %s seconds ---" % (time.time() - start_time))
+\end{lstlisting}
 \subsection*{Output:}
-TODO
+\begin{center}
+    \includegraphics[scale=.8]{images/Q3_Output.png}
+\end{center}
 \section{Question 4}
 \subsection*{Task:}
 Given a list of leaked passwords from a site and a list of names, create a script to
@@ -146,18 +174,82 @@ find out what passwords they used.
 
 \section{Question 5}
 \subsection*{Task:}
-TODO
+Given a list of hashed passwords that were leaked compare them to a list of 100k most common passwords and find out what passwords they used.
 \subsubsection*{Break5.py:}
-TODO
+\begin{lstlisting}[language=Python]
+import time
+import os
+import random
+import hashlib
+
+if __name__ in '__main__': 
+    start_time = time.time()
+    common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
+    gang_names=[i.strip() for i in open('/home/cse/Lab1/gang.txt')]
+    hashed_pws = [i.strip() for i in open('/home/cse/Lab1/Q5/HashedPWs')]
+    hashed_pws = dict(i.split(',') for i in hashed_pws if i.split(',')[0] in gang_names)
+    named_pws = dict((i + str(j), hashlib.sha256(bytes(i + str(j), 'utf-8')).hexdigest()) for i in common_passwords for j in range(100))
+    
+    matched = []
+    for name, hashed in hashed_pws.items():
+        for p, h in named_pws.items():
+            if hashed == h:
+                matched.append((name, p))
+    
+    ogpass = []
+    for name, p in named_pws.items():
+        for i in matched:
+            if name == i[1]:
+                ogpass.append((i[0], name))
+
+    for name, p in hashed_pws.items():
+        for i in ogpass:
+            if name == i[0]:
+                if os.system('python3 ./Login.pyc'+ ' ' + name + ' ' + i[1] + " >/dev/null 2>&1") == 0:
+                    print(name, i[1], "--- %s seconds ---" % (time.time() - start_time))
+\end{lstlisting}
 \subsubsection*{Output:}
-TODO
+\begin{center}
+    \includegraphics[scale=.6]{images/Q5_Output.png}
+\end{center}
 \section{Question 6}
 \subsection*{Task:}
-TODO
+Use SaltedPWS to find the gang members' passwords from 100k most common passwords.
 \subsubsection*{Break6.py:}
-TODO
+\begin{lstlisting}[language=Python]
+import os
+import time
+import hashlib
+
+if __name__ in '__main__':
+    start_time = time.time()
+
+    gang_names = [i.strip() for i in open('/home/cse/Lab1/gang.txt')]
+    salted = [i.strip() for i in open('/home/cse/Lab1/Q6/SaltedPWs')]
+    common_passwords = [i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
+
+    salted_passwords = dict((i.split(',')[1], i.split(',')[2]) for i in salted if i.split(',')[0] in gang_names)
+    
+    new_pass = {}
+    for password in common_passwords:
+        for rand in range(9,100):
+            for ps in salted_passwords:         
+                new_pass[password+str(rand)]=hashlib.sha256(bytes(((password + str(rand))+salted_passwords[ps]), 'utf-8')).hexdigest()[2:-1]
+
+    matches = [new_pass[name] for name in new_pass for l in salted_passwords if new_pass[name] == l]
+    passwords = [pw for pw in new_pass for match in matches if new_pass[pw] == match]
+
+    for name in gang_names:
+        for pw in passwords:
+            print(os.system('python3 ./Login.pyc'+ ' ' + name + ' ' + pw) )
+            print(name,pw, "--- %s seconds ---" % (time.time() - start_time))
+\end{lstlisting}
+
 \subsubsection*{Output:}
-TODO
+\begin{center}
+    \includegraphics[scale=.863]{images/0.png}
+    \includegraphics[scale=.8]{images/Q6_Output.png}
+\end{center}
 \section{Question 7}
 \subsection*{Task:}
 Check if one of your own personal accounts has any exposed passwords using 
@@ -196,6 +288,11 @@ and hashed using the SHA-1 algorithm, but were not salted. This means that the p
 hashed using a one-way function, but the same password would always hash to the same value.
 This made it easy for attackers to crack the passwords. 
 
+\begin{center}
+    \includegraphics[scale=.22]{images/link_hack.png}
+    link: https://www.trendmicro.com/vinfo/us/security/news/cyber-attacks/2012-linkedin-breach-117-million-emails-and-passwords-stolen-not-6-5m
+\end{center}
+
 \section{Question 9}
 \subsection*{Task:} Give an example of a website that does not support or offer 2FA.
 
@@ -209,5 +306,12 @@ and does not offer it as an option. This is a huge security risk as there is onl
 protection for your account and if your password is compromised, your account is compromised.
 A example in the utilities field is Connecticut's Electric and Gas company, Eversource. Eversource
 does not offer 2FA which should be crucial for a company that handles sensitive information
-such as credit card numbers and social security numbers. 
+such as credit card numbers and social security numbers. I use 2FA and so do my parents for all of our accounts and
+I think that it is a good idea for all companies to offer 2FA as an option. I want another layer
+of protection for my accounts and I think that 2FA is a good way to do that.
+
+\begin{center}
+    \includegraphics[scale=.25]{images/2fa1.png}
+    \includegraphics[scale=.25]{images/2fa2.png}
+\end{center}
 \end{document}

