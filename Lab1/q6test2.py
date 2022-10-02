@@ -4,45 +4,26 @@ import random
 import hashlib
 
 
-start_time = time.time()
-common_passwords=[i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
-gang_names=[i.strip() for i in open('/home/cse/Lab1/gang.txt')]
-salted_passwords = [i.strip() for i in open('/home/cse/Lab1/Q6/SaltedPWs')]
+    # Make this different
 
-spws = {}
-for line in salted_passwords:
-    splitline = line.split(',')
-    if splitline[0] in gang_names:
-        spws[splitline[1]]= splitline[2]
+    # start_time = time.time()
 
-#Hashed and Salted passwords
-npw = {}
-for pw in common_passwords:
-    for i in range(99):
-        for a, b in spws.items():        
-            p = pw + str(i)
-            saltpass = p+b    
-            p = hashlib.sha256(bytes(saltpass, 'utf-8'))
-            p = p.hexdigest()
-            hashed = p[2:-1]
-            npw[pw+str(i)]=hashed
+    # gang_names = [i.strip() for i in open('/home/cse/Lab1/gang.txt')]
+    # salted = [i.strip() for i in open('/home/cse/Lab1/Q6/SaltedPWs')]
+    # common_passwords = [i.strip() for i in open('/home/cse/Lab1/PwnedPWs100k.txt')]
 
-#Hashed matches between Salted Passwords and generated passwords
-hashedmatches = []
-for name, hp in npw.items():
-    for l, d in spws.items():
-        if hp == l:
-            hashedmatches.append(l)
+    # salted_passwords = dict((i.split(',')[1], i.split(',')[2]) for i in salted if i.split(',')[0] in gang_names)
+    
+    # new_pass = {}
+    # for password in common_passwords:
+    #     for rand in range(9,100):
+    #         for ps in salted_passwords:         
+    #             new_pass[password+str(rand)]=hashlib.sha256(bytes(((password + str(rand))+salted_passwords[ps]), 'utf-8')).hexdigest()[2:-1]
 
-#retrieving original passwords
-originalpws = []
+    # matches = [new_pass[name] for name in new_pass for l in salted_passwords if new_pass[name] == l]
+    # passwords = [pw for pw in new_pass for match in matches if new_pass[pw] == match]
 
-for k, v in npw.items():
-    for hashedmatch in hashedmatches:
-        if v == hashedmatch:
-            originalpws.append(k)
-
-for i in gang_names:
-    for j in originalpws:
-        if subprocess.call(['python3', './Login.pyc', i, j]) == 0:
-            print(i, j, "--- %s seconds ---" % (time.time() - start_time))
+    # for name in gang_names:
+    #     for pw in passwords:
+    #         print(os.system('python3 ./Login.pyc'+ ' ' + name + ' ' + pw) )
+    #         print(name,pw, "--- %s seconds ---" % (time.time() - start_time))
